@@ -8,7 +8,7 @@
     <!-- 团队成员展示区域 -->
     <div class="team-members" ref="teamMembersRef">
       <div 
-        v-for="(member, index) in teamMembers" 
+        v-for="member in teamMembers" 
         :key="member.id"
         class="member-card"
         :class="`member-${member.id}`"
@@ -131,7 +131,7 @@ const teamMembers = ref([
   },
   {
     id: 6,
-    name: 'Johnson Chu',
+    name: 'Johnson Chu', 
     role: 'Vue Language Tools Creator',
     avatar: '/avatars/JohnsonChu.png',
     bio: 'Creator of Vue Language Tools and Volar.js, revolutionizing Vue development experience. TypeScript expert focused on Vue tooling ecosystem.',
