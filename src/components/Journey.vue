@@ -14,7 +14,7 @@
         
         <!-- 时间线项目 -->
         <div 
-          v-for="(event, index) in timelineEvents" 
+          v-for="(event) in timelineEvents" 
           :key="event.year"
           class="timeline-item"
           :class="{ 'timeline-item-current': event.isCurrent }"
