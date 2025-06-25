@@ -23,6 +23,7 @@
         <div v-if="selectedMember?.id === member.id && isExpanded" class="member-detail">
           <div class="detail-content">
             <div class="detail-header">
+              <div class="swipe-indicator"></div>
               <h2>{{ member.name }}</h2>
               <p class="detail-role">{{ member.role }}</p>
               <button @click.stop="closeDetail" class="close-btn">✕</button>
@@ -185,6 +186,11 @@ const teamMembersRef = ref<HTMLElement>()
 const selectedMember = ref<any>(null)
 const isExpanded = ref(false)
 
+// 移动端手势支持
+let startY = 0
+let startTime = 0
+const touchListenersMap = new WeakMap()
+
 // 点击成员卡片
 const handleMemberClick = (member: any) => {
   if (isExpanded.value && selectedMember.value?.id === member.id) {
@@ -193,8 +199,105 @@ const handleMemberClick = (member: any) => {
     return
   }
   
-  // 只调用展开函数，不重复设置状态
-  expandMemberDetail(member)
+  // 检查是否为移动端
+  const isMobile = window.innerWidth <= 768
+  
+  if (isMobile) {
+    // 移动端使用简单的弹出效果
+    expandMemberDetailMobile(member)
+  } else {
+    // 桌面端使用复杂的展开动画
+    expandMemberDetail(member)
+  }
+}
+
+// 移动端展开成员详情（简化版）
+const expandMemberDetailMobile = (member: any) => {
+  selectedMember.value = member
+  isExpanded.value = true
+  
+  // 简单的淡入动画
+  nextTick(() => {
+    const detailPanel = document.querySelector('.member-detail')
+    if (detailPanel) {
+      gsap.fromTo(detailPanel, 
+        { opacity: 0, scale: 0.9 },
+        { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" }
+      )
+      
+      // 添加触摸事件监听器
+      addMobileTouchListeners(detailPanel as HTMLElement)
+    }
+  })
+}
+
+// 添加移动端触摸事件监听器
+const addMobileTouchListeners = (element: HTMLElement) => {
+  const handleTouchStart = (e: TouchEvent) => {
+    startY = e.touches[0].clientY
+    startTime = Date.now()
+  }
+  
+  const handleTouchMove = (e: TouchEvent) => {
+    const currentY = e.touches[0].clientY
+    const deltaY = currentY - startY
+    
+    // 只允许向下滑动
+    if (deltaY > 0) {
+      const progress = Math.min(deltaY / 200, 1) // 200px为完全关闭距离
+      const opacity = 1 - progress * 0.5
+      const scale = 1 - progress * 0.1
+      
+      gsap.set(element, {
+        opacity: opacity,
+        scale: scale,
+        y: deltaY * 0.5 // 跟随手指移动，但有阻尼
+      })
+    }
+  }
+  
+  const handleTouchEnd = (e: TouchEvent) => {
+    const endY = e.changedTouches[0].clientY
+    const deltaY = endY - startY
+    const deltaTime = Date.now() - startTime
+    const velocity = deltaY / deltaTime // 计算滑动速度
+    
+    // 判断是否应该关闭：滑动距离 > 100px 或 快速向下滑动
+    if (deltaY > 100 || (deltaY > 50 && velocity > 0.5)) {
+      closeDetail()
+    } else {
+      // 弹回原位
+      gsap.to(element, {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        duration: 0.3,
+        ease: "power2.out"
+      })
+    }
+  }
+  
+  element.addEventListener('touchstart', handleTouchStart, { passive: true })
+  element.addEventListener('touchmove', handleTouchMove, { passive: false })
+  element.addEventListener('touchend', handleTouchEnd, { passive: true })
+  
+  // 保存引用以便后续移除
+  touchListenersMap.set(element, {
+    touchstart: handleTouchStart,
+    touchmove: handleTouchMove,
+    touchend: handleTouchEnd
+  })
+}
+
+// 移除触摸事件监听器
+const removeMobileTouchListeners = (element: HTMLElement) => {
+  const listeners = touchListenersMap.get(element)
+  if (listeners) {
+    element.removeEventListener('touchstart', listeners.touchstart)
+    element.removeEventListener('touchmove', listeners.touchmove)
+    element.removeEventListener('touchend', listeners.touchend)
+    touchListenersMap.delete(element)
+  }
 }
 
 // 展开成员详情
@@ -375,6 +478,44 @@ const expandMemberDetail = (member: any) => {
 
 // 关闭详情
 const closeDetail = () => {
+  const isMobile = window.innerWidth <= 768
+  
+  if (isMobile) {
+    // 移动端简单关闭动画
+    closeDetailMobile()
+  } else {
+    // 桌面端复杂关闭动画
+    closeDetailDesktop()
+  }
+}
+
+// 移动端关闭详情（简化版）
+const closeDetailMobile = () => {
+  const detailPanel = document.querySelector('.member-detail') as HTMLElement
+  
+  if (detailPanel) {
+    // 移除触摸事件监听器
+    removeMobileTouchListeners(detailPanel)
+    
+    gsap.to(detailPanel, {
+      opacity: 0,
+      scale: 0.9,
+      y: 50, // 向下滑出的效果
+      duration: 0.25,
+      ease: "power2.in",
+      onComplete: () => {
+        selectedMember.value = null
+        isExpanded.value = false
+      }
+    })
+  } else {
+    selectedMember.value = null
+    isExpanded.value = false
+  }
+}
+
+// 桌面端关闭详情（原复杂动画）
+const closeDetailDesktop = () => {
   const selectedCardElement = document.querySelector(`.member-${selectedMember.value?.id}`)
   const otherCards = document.querySelectorAll('.member-card:not(.member-' + selectedMember.value?.id + ')')
   
@@ -536,6 +677,9 @@ onMounted(() => {
   /* 隐藏滚动条 */
   scrollbar-width: none;
   -ms-overflow-style: none;
+  
+  /* 移动端触摸滚动优化 */
+  -webkit-overflow-scrolling: touch;
 }
 
 .team-members::-webkit-scrollbar {
@@ -624,6 +768,29 @@ onMounted(() => {
   border-color: rgba(44, 226, 126, 0.3);
 }
 
+/* 移动端点击效果 */
+@media (max-width: 768px) {
+  .member-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  /* 禁用移动端的hover效果 */
+  .member-card:hover {
+    transform: none;
+    box-shadow: 
+      0 12px 48px rgba(0, 0, 0, 0.4),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .member-card:hover .member-info {
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
 .member-card:hover .member-info {
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
@@ -693,6 +860,9 @@ onMounted(() => {
   /* 隐藏滚动条 */
   scrollbar-width: none;
   -ms-overflow-style: none;
+  
+  /* 移动端触摸滚动优化 */
+  -webkit-overflow-scrolling: touch;
 }
 
 .detail-content::-webkit-scrollbar {
@@ -823,6 +993,11 @@ onMounted(() => {
   color: rgba(44, 226, 126, 1);
 }
 
+/* 默认隐藏滑动指示器（桌面端） */
+.swipe-indicator {
+  display: none;
+}
+
 
 
 /* 动画触发 */
@@ -913,13 +1088,18 @@ onMounted(() => {
 
 /* 响应式调整 */
 @media (max-width: 768px) {
+  .us-container {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
   .us-title-container {
-    top: 40px;
-    left: 40px;
+    top: 30px;
+    left: 30px;
   }
   
   .us-title {
-    font-size: 3rem;
+    font-size: 2.8rem;
   }
   
   .us-underline {
@@ -928,71 +1108,21 @@ onMounted(() => {
   }
   
   .team-members {
-    padding: 0 40px 0 200px;
-    gap: 40px;
+    flex-direction: row;
+    height: 100vh;
+    padding: 0 30px;
+    gap: 30px;
+    justify-content: flex-start;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
   
   .member-card {
     width: 280px;
     height: 380px;
-  }
-  
-  .member-info {
-    padding: 24px 20px;
-  }
-  
-  .member-name {
-    font-size: 1.4rem;
-  }
-  
-  .member-role {
-    font-size: 0.9rem;
-  }
-  
-  /* 详情面板响应式 */
-  .member-detail {
-    width: 75%;
-  }
-  
-  .detail-content {
-    padding: 30px;
-  }
-  
-  .detail-header h2 {
-    font-size: 2.2rem;
-  }
-  
-  .detail-section h3 {
-    font-size: 1.2rem;
-  }
-  
-
-}
-
-@media (max-width: 480px) {
-  .us-title-container {
-    top: 30px;
-    left: 30px;
-  }
-  
-  .us-title {
-    font-size: 2.5rem;
-    letter-spacing: 0.03em;
-  }
-  
-  .us-underline {
-    width: 50px;
-    height: 3px;
-  }
-  
-  .team-members {
-    padding: 0 30px 0 150px;
-    gap: 30px;
-  }
-  
-  .member-card {
-    width: 240px;
-    height: 320px;
+    flex-shrink: 0;
+    margin-bottom: 0;
   }
   
   .member-info {
@@ -1000,49 +1130,367 @@ onMounted(() => {
   }
   
   .member-name {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
   }
   
   .member-role {
+    font-size: 0.85rem;
+  }
+  
+  /* 详情面板响应式 */
+  .member-detail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    right: auto;
+    border-radius: 0;
+    border-left: none;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background: rgba(0, 0, 0, 0.95);
+  }
+  
+  .detail-content {
+    padding: 25px 20px;
+    padding-top: 60px; /* 为关闭按钮留出空间 */
+  }
+  
+  .detail-header {
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    position: relative;
+  }
+  
+  .swipe-indicator {
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    margin: 0 auto 20px auto;
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .detail-header h2 {
+    font-size: 2rem;
+    padding-right: 50px; /* 避免与关闭按钮重叠 */
+  }
+  
+  .detail-role {
+    font-size: 1rem;
+  }
+  
+  .close-btn {
+    position: fixed !important;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    z-index: 101;
+  }
+  
+  .detail-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+  
+  .detail-section p {
+    font-size: 0.9rem;
+  }
+  
+  .skills-list {
+    gap: 8px;
+  }
+  
+  .skill-tag {
     font-size: 0.8rem;
+    padding: 5px 12px;
   }
   
   .scroll-hint {
-    bottom: 20px;
-    right: 20px;
+    bottom: 30px;
+    right: 30px;
   }
   
   .scroll-hint-text {
     font-size: 0.9rem;
     padding: 10px 16px;
   }
+}
+
+@media (max-width: 480px) {
+  .us-container {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .us-title-container {
+    top: 15px;
+    left: 20px;
+  }
+  
+  .us-title {
+    font-size: 1.8rem;
+    letter-spacing: 0.03em;
+  }
+  
+  .us-underline {
+    width: 40px;
+    height: 2px;
+  }
+  
+  .team-members {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px);
+    margin-top: 80px;
+    padding: 0 20px 20px 20px;
+    gap: 15px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-content: start;
+  }
+  
+  .member-card {
+    width: 100%;
+    height: 120px;
+    flex-shrink: 0;
+  }
+  
+  .member-info {
+    padding: 12px 15px;
+  }
+  
+  .member-name {
+    font-size: 1.1rem;
+    line-height: 1.2;
+  }
+  
+  .member-role {
+    font-size: 0.8rem;
+  }
   
   /* 详情面板响应式 */
   .member-detail {
-    width: 75%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    z-index: 100;
   }
   
   .detail-content {
-    padding: 20px;
+    padding: 15px;
+    padding-top: 70px; /* 为关闭按钮留出更多空间 */
+  }
+  
+  .detail-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+  }
+  
+  .swipe-indicator {
+    display: block;
+    width: 35px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 2px;
+    margin: 0 auto 15px auto;
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
   }
   
   .detail-header h2 {
-    font-size: 2rem;
+    font-size: 1.6rem;
+    margin-bottom: 5px;
+    padding-right: 50px; /* 避免与关闭按钮重叠 */
   }
   
-  .detail-section h3 {
-    font-size: 1.1rem;
-  }
-  
-  .detail-section p, .achievements-list li {
+  .detail-role {
     font-size: 0.9rem;
   }
   
-  .skill-tag {
-    font-size: 0.8rem;
-    padding: 4px 10px;
+  .close-btn {
+    position: fixed !important;
+    top: 15px;
+    right: 15px;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    z-index: 101;
   }
   
+  .detail-section {
+    margin-bottom: 20px;
+  }
+  
+  .detail-section h3 {
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+  
+  .detail-section p, .achievements-list li {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  
+  .achievements-list li {
+    margin-bottom: 6px;
+    padding-left: 15px;
+  }
+  
+  .skills-list {
+    gap: 6px;
+  }
+  
+  .skill-tag {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+  
+  .github-link {
+    font-size: 0.85rem;
+  }
+  
+  .scroll-hint {
+    display: none;
+  }
+}
 
+/* 超小屏幕优化 */
+@media (max-width: 360px) {
+  .us-container {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .us-title-container {
+    top: 10px;
+    left: 15px;
+  }
+  
+  .us-title {
+    font-size: 1.6rem;
+  }
+  
+  .us-underline {
+    width: 35px;
+    height: 2px;
+  }
+  
+  .team-members {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 70px);
+    margin-top: 70px;
+    padding: 0 15px 15px 15px;
+    gap: 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-content: start;
+  }
+  
+  .member-card {
+    width: 100%;
+    height: 100px;
+    flex-shrink: 0;
+  }
+  
+  .member-info {
+    padding: 10px 12px;
+  }
+  
+  .member-name {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+  
+  .member-role {
+    font-size: 0.75rem;
+  }
+  
+  .member-detail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    z-index: 100;
+  }
+  
+  .detail-content {
+    padding: 12px;
+    padding-top: 60px; /* 为关闭按钮留出空间 */
+  }
+  
+  .detail-header h2 {
+    font-size: 1.4rem;
+    padding-right: 45px; /* 避免与关闭按钮重叠 */
+  }
+  
+  .swipe-indicator {
+    display: block;
+    width: 30px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 2px;
+    margin: 0 auto 12px auto;
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .detail-role {
+    font-size: 0.8rem;
+  }
+  
+  .close-btn {
+    position: fixed !important;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    z-index: 101;
+  }
+  
+  .detail-section h3 {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+  
+  .detail-section p, .achievements-list li {
+    font-size: 0.8rem;
+  }
+  
+  .skill-tag {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
 }
 </style> 
