@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import Journey from './components/Journey.vue'
+import Member from './components/Member.vue'
 import TextAnimation from './components/TextAnimation.vue'
 import VueIcon from './components/VueIcon.vue'
-import Us from './components/Us.vue'
 </script>
 
 <template>
@@ -46,8 +47,21 @@ import Us from './components/Us.vue'
       <!-- 有质感的黑色背景覆盖层 -->
       <div class="background-overlay"></div>
       
-      <!-- Us 组件 -->
-      <Us />
+      <Member />
+    </section>
+    
+    <!-- 第三个板块：Journey -->
+    <section class="section journey-section">
+      <!-- 背景图片（继承） -->
+      <div class="background-image">
+        <!-- 这里可以放置背景图片 -->
+      </div>
+      
+      <!-- 有质感的黑色背景覆盖层 -->
+      <div class="background-overlay"></div>
+      
+      <!-- Journey 组件 -->
+      <Journey />
     </section>
   </div>
 </template>
@@ -217,6 +231,13 @@ import Us from './components/Us.vue'
     gap: 100px;
     flex-direction: column;
   }
+}
+
+/* Journey section样式 */
+.journey-section {
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
 }
 
 @media (max-width: 480px) {

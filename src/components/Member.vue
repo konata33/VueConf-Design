@@ -1,7 +1,7 @@
 <template>
   <div class="us-container">
     <div class="us-title-container">
-      <h2 class="us-title">Us</h2>
+      <h2 class="us-title">Member</h2>
       <div class="us-underline"></div>
     </div>
     
@@ -74,8 +74,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
 import { gsap } from 'gsap'
+import { nextTick, onMounted, ref } from 'vue'
 
 // 团队成员数据
 const teamMembers = ref([
