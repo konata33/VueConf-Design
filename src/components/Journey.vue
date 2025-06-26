@@ -1,19 +1,12 @@
 <template>
   <div class="journey-container">
-    <!-- 标题区域（左上角） -->
     <div class="journey-title-container">
       <h2 class="journey-title">Journey</h2>
       <div class="journey-underline"></div>
     </div>
-    
-    <!-- 时间线区域 -->
     <div class="timeline-wrapper">
-
       <div class="timeline-container" ref="timelineContainer">
-        <!-- 时间线背景线 -->
         <div class="timeline-line" ref="timelineLine"></div>
-        
-        <!-- 时间线项目 -->
         <div 
           v-for="(event) in timelineEvents" 
           :key="event.year"
@@ -21,30 +14,17 @@
           :class="{ 'timeline-item-current': event.isCurrent }"
           ref="timelineItems"
         >
-
-          
-          <!-- 时间线卡片 -->
           <div class="timeline-card" @click="handleCardClick(event)">
-            <!-- 背景图片 -->
             <div class="timeline-image">
               <img :src="`/journey/${event.year}.png`" :alt="`VueConf ${event.year}`" />
               <div class="timeline-image-overlay"></div>
             </div>
-            
-            <!-- 年份标签 -->
             <div class="timeline-year-badge">{{ event.year }}</div>
-            
-            <!-- 内容区域 -->
             <div class="timeline-content">
-              <!-- 主标题 -->
               <h3 class="timeline-title">{{ event.title }}</h3>
-              
-              <!-- 描述信息 -->
               <div class="timeline-brief">
                 {{ event.description }}
               </div>
-              
-              <!-- 亮点标签 -->
               <div class="timeline-tags">
                 <div 
                   v-for="(highlight, index) in event.highlights.slice(0, 2)" 
@@ -56,13 +36,7 @@
                   {{ highlight }}
                 </div>
               </div>
-              
-
-              
-
             </div>
-            
-            <!-- 悬停信息 -->
             <div class="timeline-hover-info">
               <p class="timeline-description">{{ event.description }}</p>
               <div class="timeline-highlights">
@@ -81,30 +55,20 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 import { gsap } from 'gsap'
 import { onMounted, ref } from 'vue'
-
 const timelineItems = ref<HTMLElement[]>([])
 const timelineContainer = ref<HTMLElement>()
-
-// 卡片点击处理
 const handleCardClick = (event: any) => {
   const isMobile = window.innerWidth <= 768
-  
   if (isMobile) {
-    // 移动端：显示简单的详情信息（可以扩展为弹窗）
     const message = `${event.title}\n\n${event.description}\n\n亮点：\n${event.highlights.join('\n• ')}`
-    
-    // 简单的原生弹窗，可以后续改为自定义弹窗
     alert(message)
   } else {
-    // 桌面端：保持原有逻辑
     console.log('Card clicked:', event.title)
   }
 }
-
 const timelineEvents = ref([
   {
     year: '2017',
@@ -170,12 +134,9 @@ const timelineEvents = ref([
     isCurrent: true
   }
 ])
-
 onMounted(() => {
   const isMobile = window.innerWidth <= 768
-  
   if (!isMobile) {
-    // 桌面端：设置时间线项目的初始位置（水平排列）
     if (timelineItems.value.length > 0) {
       let totalWidth = 0
       timelineItems.value.forEach((item) => {
@@ -183,10 +144,8 @@ onMounted(() => {
           left: totalWidth,
           transform: 'translateY(-50%)'
         })
-        totalWidth += 420 // 卡片宽度360px + 间距60px
+        totalWidth += 420
       })
-      
-      // 设置容器的滚动宽度
       const container = timelineContainer.value
       if (container) {
         const scrollWidth = totalWidth + 150
@@ -196,23 +155,17 @@ onMounted(() => {
       }
     }
   }
-  
-  // 时间线入场动画
   setTimeout(() => {
     if (!isMobile) {
-      // 桌面端：显示时间线
       gsap.fromTo('.timeline-line', 
         { width: 0 },
         { width: '100%', duration: 1.5, ease: "power2.out" }
       )
     }
-    
-    // 显示时间线项目（桌面端和移动端都需要）
     if (timelineItems.value.length > 0) {
       timelineItems.value.forEach((item, index) => {
         const initialY = isMobile ? 30 : 50
         const initialScale = isMobile ? 0.95 : 0.8
-        
         gsap.fromTo(item,
           { opacity: 0, y: initialY, scale: initialScale },
           { 
@@ -227,11 +180,8 @@ onMounted(() => {
       })
     }
   }, 800)
-  
-
 })
 </script>
-
 <style scoped>
 @font-face {
   font-family: 'Inter Display';
@@ -240,7 +190,6 @@ onMounted(() => {
   font-style: normal;
   font-display: swap;
 }
-
 @font-face {
   font-family: 'Inter Display Bold';
   src: url('/Inter-Display-Bold.woff2') format('woff2');
@@ -248,7 +197,6 @@ onMounted(() => {
   font-style: normal;
   font-display: swap;
 }
-
 .journey-container {
   position: absolute;
   top: 0;
@@ -260,7 +208,6 @@ onMounted(() => {
   padding: 0;
   z-index: 10;
 }
-
 .journey-title-container {
   position: absolute;
   top: 60px;
@@ -271,7 +218,6 @@ onMounted(() => {
   gap: 15px;
   z-index: 20;
 }
-
 .journey-title {
   font-family: 'Inter Display', 'Georgia', serif;
   font-size: 4rem;
@@ -288,7 +234,6 @@ onMounted(() => {
   transform: translateY(20px);
   animation: titleFadeIn 1s ease-out 0.5s forwards;
 }
-
 .journey-underline {
   width: 120px;
   height: 4px;
@@ -307,7 +252,6 @@ onMounted(() => {
     0 0 10px rgba(44, 226, 126, 0.5),
     0 0 20px rgba(44, 226, 126, 0.3);
 }
-
 .timeline-wrapper {
   position: absolute;
   bottom: 150px;
@@ -321,18 +265,15 @@ onMounted(() => {
   padding: 0 60px;
   box-sizing: border-box;
 }
-
 .timeline-wrapper::-webkit-scrollbar {
   display: none;
 }
-
 .timeline-container {
   position: relative;
   width: max-content;
   height: 100%;
   display: block;
 }
-
 .timeline-line {
   position: absolute;
   left: 0;
@@ -351,7 +292,6 @@ onMounted(() => {
     0 0 16px rgba(44, 226, 126, 0.2);
   z-index: 1;
 }
-
 .timeline-item {
   position: absolute;
   top: 50%;
@@ -362,23 +302,12 @@ onMounted(() => {
   z-index: 10;
   transform: translateY(-50%);
 }
-
 .timeline-item:first-child {
   margin-left: 0;
 }
-
 .timeline-item:last-child {
   margin-right: 150px;
 }
-
-
-
-
-
-
-
-
-
 .timeline-card {
   position: relative;
   width: 360px;
@@ -395,7 +324,6 @@ onMounted(() => {
     0 8px 32px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.05);
 }
-
 .timeline-card:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(44, 226, 126, 0.4);
@@ -404,9 +332,6 @@ onMounted(() => {
     0 20px 60px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(44, 226, 126, 0.3);
 }
-
-
-
 .timeline-card:hover .timeline-year-badge {
   transform: scale(1.05);
   box-shadow: 
@@ -414,7 +339,6 @@ onMounted(() => {
     0 3px 12px rgba(0, 0, 0, 0.5),
     0 0 0 3px rgba(255, 255, 255, 0.2);
 }
-
 .timeline-item-current .timeline-card:hover .timeline-year-badge {
   transform: scale(1.05);
   box-shadow: 
@@ -422,7 +346,6 @@ onMounted(() => {
     0 3px 15px rgba(0, 0, 0, 0.6),
     0 0 0 4px rgba(255, 255, 255, 0.3);
 }
-
 .timeline-item-current .timeline-card {
   background: rgba(255, 215, 0, 0.1);
   border-color: rgba(255, 215, 0, 0.4);
@@ -430,14 +353,12 @@ onMounted(() => {
     0 8px 32px rgba(255, 215, 0, 0.15),
     0 0 0 1px rgba(255, 215, 0, 0.1);
 }
-
 .timeline-item-current .timeline-card:hover {
   border-color: rgba(255, 215, 0, 0.6);
   box-shadow: 
     0 20px 60px rgba(255, 215, 0, 0.2),
     0 0 0 1px rgba(255, 215, 0, 0.4);
 }
-
 .timeline-image {
   position: relative;
   width: 100%;
@@ -449,7 +370,6 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
 }
-
 .timeline-image img {
   width: 100%;
   height: 100%;
@@ -459,11 +379,9 @@ onMounted(() => {
   min-height: 100%;
   min-width: 100%;
 }
-
 .timeline-card:hover .timeline-image img {
   transform: scale(1.08);
 }
-
 .timeline-image-overlay {
   position: absolute;
   top: 0;
@@ -479,7 +397,6 @@ onMounted(() => {
   );
   z-index: 2;
 }
-
 .timeline-year-badge {
   position: absolute;
   top: 15px;
@@ -500,7 +417,6 @@ onMounted(() => {
   letter-spacing: 0.05em;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
-
 .timeline-item-current .timeline-year-badge {
   background: linear-gradient(135deg, #ffd700, #ffed4e);
   color: rgba(0, 0, 0, 1);
@@ -512,7 +428,6 @@ onMounted(() => {
   padding: 12px 20px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
-
 .timeline-content {
   position: relative;
   padding: 20px;
@@ -521,7 +436,6 @@ onMounted(() => {
   flex-direction: column;
   z-index: 3;
 }
-
 .timeline-hover-info {
   position: absolute;
   top: 338px;
@@ -545,12 +459,10 @@ onMounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-top: none;
 }
-
 .timeline-card:hover .timeline-hover-info {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
-
 .timeline-title {
   font-family: 'Inter Display Bold', 'Inter Display', 'Georgia', serif;
   font-size: 1.3rem;
@@ -561,9 +473,6 @@ onMounted(() => {
   line-height: 1.2;
   letter-spacing: 0.02em;
 }
-
-
-
 .timeline-brief {
   font-family: 'Inter Display Bold', 'Inter Display', 'Georgia', serif;
   font-size: 0.8rem;
@@ -576,14 +485,12 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .timeline-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 12px;
 }
-
 .timeline-tag {
   display: flex;
   align-items: center;
@@ -601,15 +508,9 @@ onMounted(() => {
   opacity: 0;
   transform: translateY(10px);
 }
-
 .tag-icon {
   font-size: 0.7rem;
 }
-
-
-
-
-
 .timeline-description {
   font-family: 'Inter Display Bold', 'Inter Display', 'Georgia', serif;
   font-size: 1.1rem;
@@ -621,7 +522,6 @@ onMounted(() => {
   max-width: 300px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
-
 .timeline-highlights {
   display: flex;
   flex-wrap: wrap;
@@ -629,7 +529,6 @@ onMounted(() => {
   justify-content: center;
   max-width: 300px;
 }
-
 .timeline-highlight {
   background: linear-gradient(135deg, rgba(44, 226, 126, 0.3), rgba(44, 226, 126, 0.15));
   border: 1px solid rgba(44, 226, 126, 0.6);
@@ -646,7 +545,6 @@ onMounted(() => {
     0 0 0 1px rgba(255, 255, 255, 0.05);
   transition: all 0.3s ease;
 }
-
 .timeline-highlight:hover {
   background: linear-gradient(135deg, rgba(44, 226, 126, 0.4), rgba(44, 226, 126, 0.2));
   border-color: rgba(44, 226, 126, 0.8);
@@ -655,7 +553,6 @@ onMounted(() => {
     0 6px 16px rgba(44, 226, 126, 0.3),
     0 0 0 2px rgba(255, 255, 255, 0.1);
 }
-
 .timeline-item-current .timeline-hover-info .timeline-highlight {
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.35), rgba(255, 215, 0, 0.2));
   border-color: rgba(255, 215, 0, 0.7);
@@ -665,7 +562,6 @@ onMounted(() => {
     0 4px 12px rgba(255, 215, 0, 0.25),
     0 0 0 1px rgba(255, 255, 255, 0.1);
 }
-
 .timeline-item-current .timeline-hover-info .timeline-highlight:hover {
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.45), rgba(255, 215, 0, 0.25));
   border-color: rgba(255, 215, 0, 0.9);
@@ -674,16 +570,12 @@ onMounted(() => {
     0 6px 16px rgba(255, 215, 0, 0.35),
     0 0 0 2px rgba(255, 255, 255, 0.15);
 }
-
 .timeline-item-current .timeline-tag {
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
   border-color: rgba(255, 215, 0, 0.4);
   color: rgba(255, 215, 0, 1);
   font-family: 'Inter Display Bold', 'Inter Display', 'Georgia', serif;
 }
-
-
-
 @keyframes titleFadeIn {
   from {
     opacity: 0;
@@ -694,7 +586,6 @@ onMounted(() => {
     transform: translateY(0);
   }
 }
-
 @keyframes underlineExpand {
   from {
     opacity: 0;
@@ -705,11 +596,6 @@ onMounted(() => {
     transform: scaleX(1);
   }
 }
-
-
-
-
-
 @keyframes scrollHintFloat {
   0%, 100% {
     transform: translateX(-50%) translateY(0);
@@ -718,7 +604,6 @@ onMounted(() => {
     transform: translateX(-50%) translateY(-5px);
   }
 }
-
 @keyframes tagFadeIn {
   from {
     opacity: 0;
@@ -729,31 +614,21 @@ onMounted(() => {
     transform: translateY(0);
   }
 }
-
-
-
-
-
-/* 响应式设计 */
 @media (max-width: 768px) {
   .journey-container {
     height: 100vh;
     overflow: hidden;
   }
-  
   .journey-title-container {
     top: 30px;
     left: 30px;
   }
-  
   .journey-title {
     font-size: 2.8rem;
   }
-  
   .journey-underline {
     width: 80px;
   }
-  
   .timeline-wrapper {
     position: absolute;
     top: 120px;
@@ -766,7 +641,6 @@ onMounted(() => {
     padding: 0 30px 30px 30px;
     -webkit-overflow-scrolling: touch;
   }
-  
   .timeline-container {
     display: flex;
     flex-direction: column;
@@ -775,11 +649,9 @@ onMounted(() => {
     height: auto;
     min-height: 100%;
   }
-  
   .timeline-line {
-    display: none; /* 隐藏横线，移动端不需要 */
+    display: none; 
   }
-  
   .timeline-item {
     position: relative;
     top: auto;
@@ -789,15 +661,12 @@ onMounted(() => {
     width: 100%;
     opacity: 1;
   }
-  
   .timeline-card {
     width: 100%;
     height: auto;
     min-height: 400px;
     transform: none !important;
   }
-  
-  /* 禁用悬浮效果，使用点击展开 */
   .timeline-card:hover {
     transform: none !important;
     background: rgba(255, 255, 255, 0.05);
@@ -806,78 +675,59 @@ onMounted(() => {
       0 8px 32px rgba(0, 0, 0, 0.3),
       0 0 0 1px rgba(255, 255, 255, 0.05);
   }
-  
-  /* 移动端点击效果 */
   .timeline-card:active {
     transform: scale(0.98) !important;
     transition: transform 0.1s ease;
   }
-  
-  /* 移动端触摸优化 */
   .timeline-card {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
-  
   .timeline-image {
     height: 250px;
   }
-  
   .timeline-content {
     padding: 20px;
     height: auto;
     min-height: 130px;
   }
-  
   .timeline-title {
     font-size: 1.2rem;
     margin-bottom: 12px;
   }
-  
   .timeline-brief {
     font-size: 0.85rem;
     margin-bottom: 12px;
     -webkit-line-clamp: 3;
   }
-  
   .timeline-tags {
     gap: 8px;
     margin-bottom: 0;
   }
-  
   .timeline-tag {
     font-size: 0.7rem;
     padding: 4px 8px;
   }
-  
-  /* 移动端悬浮信息始终隐藏 */
   .timeline-hover-info {
     display: none;
   }
-  
-
 }
-
 @media (max-width: 480px) {
   .journey-container {
     height: 100vh;
     overflow: hidden;
   }
-  
   .journey-title-container {
     top: 20px;
     left: 20px;
   }
-  
   .journey-title {
     font-size: 2.2rem;
   }
-  
   .journey-underline {
     width: 70px;
     height: 3px;
   }
-  
   .timeline-wrapper {
     position: absolute;
     top: 100px;
@@ -890,143 +740,112 @@ onMounted(() => {
     padding: 0 20px 20px 20px;
     -webkit-overflow-scrolling: touch;
   }
-  
   .timeline-container {
     display: flex;
     flex-direction: column;
     gap: 20px;
     width: 100%;
   }
-  
   .timeline-card {
     width: 100%;
     height: auto;
     min-height: 350px;
   }
-  
   .timeline-image {
     height: 200px;
   }
-  
   .timeline-content {
     padding: 16px;
     height: auto;
     min-height: 120px;
   }
-  
   .timeline-title {
     font-size: 1.1rem;
     margin-bottom: 10px;
   }
-  
   .timeline-brief {
     font-size: 0.8rem;
     margin-bottom: 10px;
     -webkit-line-clamp: 2;
   }
-  
   .timeline-tags {
     gap: 6px;
   }
-  
   .timeline-tag {
     font-size: 0.65rem;
     padding: 3px 6px;
   }
-  
   .timeline-year-badge {
     font-size: 1rem;
     padding: 8px 14px;
     top: 12px;
     right: 12px;
   }
-  
   .timeline-item-current .timeline-year-badge {
     font-size: 1.1rem;
     padding: 10px 16px;
   }
-  
-  /* 移动端悬浮信息始终隐藏 */
   .timeline-hover-info {
     display: none;
   }
-  
-
 }
-
-/* 超小屏幕优化 */
 @media (max-width: 360px) {
   .journey-title-container {
     top: 15px;
     left: 15px;
   }
-  
   .journey-title {
     font-size: 1.8rem;
   }
-  
   .journey-underline {
     width: 60px;
     height: 2px;
   }
-  
   .timeline-wrapper {
     top: 80px;
     height: calc(100vh - 80px);
     padding: 0 15px 15px 15px;
   }
-  
   .timeline-container {
     gap: 15px;
   }
-  
   .timeline-card {
     min-height: 320px;
     border-radius: 12px;
   }
-  
   .timeline-image {
     height: 180px;
     border-radius: 12px 12px 0 0;
   }
-  
   .timeline-content {
     padding: 14px;
     min-height: 110px;
   }
-  
   .timeline-title {
     font-size: 1rem;
     margin-bottom: 8px;
   }
-  
   .timeline-brief {
     font-size: 0.75rem;
     margin-bottom: 8px;
   }
-  
   .timeline-tags {
     gap: 4px;
   }
-  
   .timeline-tag {
     font-size: 0.6rem;
     padding: 2px 5px;
     border-radius: 8px;
   }
-  
   .timeline-year-badge {
     font-size: 0.9rem;
     padding: 6px 12px;
     top: 10px;
     right: 10px;
   }
-  
   .timeline-item-current .timeline-year-badge {
     font-size: 1rem;
     padding: 8px 14px;
   }
-  
-
 }
 </style> 

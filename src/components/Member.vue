@@ -4,8 +4,6 @@
       <h2 class="us-title">Member</h2>
       <div class="us-underline"></div>
     </div>
-    
-    <!-- 团队成员展示区域 -->
     <div class="team-members" ref="teamMembersRef">
       <div 
         v-for="member in teamMembers" 
@@ -18,8 +16,6 @@
         <div class="member-info">
           <div class="member-name">{{ member.name }}</div>
         </div>
-        
-        <!-- 详情面板（仅在选中时显示） -->
         <div v-if="selectedMember?.id === member.id && isExpanded" class="member-detail">
           <div class="detail-content">
             <div class="detail-header">
@@ -28,13 +24,11 @@
               <p class="detail-role">{{ member.role }}</p>
               <button @click.stop="closeDetail" class="close-btn">✕</button>
             </div>
-            
             <div class="detail-body">
               <div class="detail-section">
                 <h3>About</h3>
                 <p>{{ member.bio }}</p>
               </div>
-              
               <div class="detail-section">
                 <h3>Skills</h3>
                 <div class="skills-list">
@@ -43,7 +37,6 @@
                   </span>
                 </div>
               </div>
-              
               <div class="detail-section">
                 <h3>Achievements</h3>
                 <ul class="achievements-list">
@@ -52,7 +45,6 @@
                   </li>
                 </ul>
               </div>
-              
               <div class="detail-section">
                 <h3>GitHub</h3>
                 <a :href="`https://github.com/${member.github}`" target="_blank" class="github-link">
@@ -64,15 +56,11 @@
         </div>
       </div>
     </div>
-    
   </div>
 </template>
-
 <script setup lang="ts">
 import { gsap } from 'gsap'
 import { nextTick, onMounted, ref } from 'vue'
-
-// 团队成员数据
 const teamMembers = ref([
   {
     id: 1,
@@ -175,42 +163,27 @@ const teamMembers = ref([
     github: 'zhiyuanzmj'
   }
 ])
-
 const teamMembersRef = ref<HTMLElement>()
 const selectedMember = ref<any>(null)
 const isExpanded = ref(false)
-
-// 移动端手势支持
 let startY = 0
 let startTime = 0
 const touchListenersMap = new WeakMap()
-
-// 点击成员卡片
 const handleMemberClick = (member: any) => {
   if (isExpanded.value && selectedMember.value?.id === member.id) {
-    // 如果点击的是当前选中的成员，则关闭详情
     closeDetail()
     return
   }
-  
-  // 检查是否为移动端
   const isMobile = window.innerWidth <= 768
-  
   if (isMobile) {
-    // 移动端使用简单的弹出效果
     expandMemberDetailMobile(member)
   } else {
-    // 桌面端使用复杂的展开动画
     expandMemberDetail(member)
   }
 }
-
-// 移动端展开成员详情（简化版）
 const expandMemberDetailMobile = (member: any) => {
   selectedMember.value = member
   isExpanded.value = true
-  
-  // 简单的淡入动画
   nextTick(() => {
     const detailPanel = document.querySelector('.member-detail')
     if (detailPanel) {
@@ -218,49 +191,37 @@ const expandMemberDetailMobile = (member: any) => {
         { opacity: 0, scale: 0.9 },
         { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" }
       )
-      
-      // 添加触摸事件监听器
       addMobileTouchListeners(detailPanel as HTMLElement)
     }
   })
 }
-
-// 添加移动端触摸事件监听器
 const addMobileTouchListeners = (element: HTMLElement) => {
   const handleTouchStart = (e: TouchEvent) => {
     startY = e.touches[0].clientY
     startTime = Date.now()
   }
-  
   const handleTouchMove = (e: TouchEvent) => {
     const currentY = e.touches[0].clientY
     const deltaY = currentY - startY
-    
-    // 只允许向下滑动
     if (deltaY > 0) {
-      const progress = Math.min(deltaY / 200, 1) // 200px为完全关闭距离
+      const progress = Math.min(deltaY / 200, 1)
       const opacity = 1 - progress * 0.5
       const scale = 1 - progress * 0.1
-      
       gsap.set(element, {
         opacity: opacity,
         scale: scale,
-        y: deltaY * 0.5 // 跟随手指移动，但有阻尼
+        y: deltaY * 0.5
       })
     }
   }
-  
   const handleTouchEnd = (e: TouchEvent) => {
     const endY = e.changedTouches[0].clientY
     const deltaY = endY - startY
     const deltaTime = Date.now() - startTime
-    const velocity = deltaY / deltaTime // 计算滑动速度
-    
-    // 判断是否应该关闭：滑动距离 > 100px 或 快速向下滑动
+    const velocity = deltaY / deltaTime
     if (deltaY > 100 || (deltaY > 50 && velocity > 0.5)) {
       closeDetail()
     } else {
-      // 弹回原位
       gsap.to(element, {
         opacity: 1,
         scale: 1,
@@ -270,20 +231,15 @@ const addMobileTouchListeners = (element: HTMLElement) => {
       })
     }
   }
-  
   element.addEventListener('touchstart', handleTouchStart, { passive: true })
   element.addEventListener('touchmove', handleTouchMove, { passive: false })
   element.addEventListener('touchend', handleTouchEnd, { passive: true })
-  
-  // 保存引用以便后续移除
   touchListenersMap.set(element, {
     touchstart: handleTouchStart,
     touchmove: handleTouchMove,
     touchend: handleTouchEnd
   })
 }
-
-// 移除触摸事件监听器
 const removeMobileTouchListeners = (element: HTMLElement) => {
   const listeners = touchListenersMap.get(element)
   if (listeners) {
@@ -293,87 +249,55 @@ const removeMobileTouchListeners = (element: HTMLElement) => {
     touchListenersMap.delete(element)
   }
 }
-
-// 展开成员详情
 const expandMemberDetail = (member: any) => {
-  // 如果已经有展开的成员，快速切换
   if (isExpanded.value && selectedMember.value && selectedMember.value.id !== member.id) {
-    // 快速关闭当前成员并立即展开新成员
     const currentCard = document.querySelector(`.member-${selectedMember.value?.id}`)
     const tempSpacer = document.querySelector('.temp-spacer')
-    
-    // 快速重置
     gsap.set('.member-detail', { opacity: 0 })
     if (currentCard) {
       gsap.set(currentCard, { width: 500, height: 600, x: 0, y: 0, '--bg-opacity': 1, transition: 'all 0.4s ease' })
     }
     gsap.set('.member-card', { opacity: 1, scale: 1, transition: 'all 0.4s ease' })
     gsap.set('.team-members', { overflowX: 'auto' })
-    
     if (tempSpacer) {
       tempSpacer.remove()
     }
-    
-    // 重置状态并立即展开新成员
     selectedMember.value = null
     isExpanded.value = false
-    
-    // 使用 nextTick 确保DOM更新后再展开
     nextTick(() => {
       expandMemberDetail(member)
     })
     return
   }
-  
   selectedMember.value = member
   isExpanded.value = true
-  
   const allCards = document.querySelectorAll('.member-card')
   const selectedCard = document.querySelector(`.member-${member.id}`)
   const otherCards = Array.from(allCards).filter(card => !card.classList.contains(`member-${member.id}`))
   const teamMembersContainer = document.querySelector('.team-members')
-  
   if (!selectedCard || !teamMembersContainer) {
     console.error('Selected card or container not found')
     return
   }
-  
-  // 检测成员在列表中的位置
   const memberIndex = teamMembers.value.findIndex(m => m.id === member.id)
   const totalMembers = teamMembers.value.length
   const isLastTwo = memberIndex >= totalMembers - 2
   const isLastOne = memberIndex === totalMembers - 1
-  
-  // 确保卡片处于原始状态进行位置计算
   gsap.set(selectedCard, { x: 0, y: 0, scale: 1, rotation: 0 })
-  
-  // 计算滚动位置
   const cardRect = selectedCard.getBoundingClientRect()
   const containerRect = teamMembersContainer.getBoundingClientRect()
   const cardLeftInContainer = cardRect.left - containerRect.left + teamMembersContainer.scrollLeft
   const cardWidth = cardRect.width
   const containerWidth = containerRect.width
-  
-
-  
-  // 清理可能残留的临时元素
   const existingSpacer = document.querySelector('.temp-spacer')
   if (existingSpacer) {
     existingSpacer.remove()
   }
-  
   let targetScrollLeft
-  
-  // 对最后两个成员，临时增加滚动空间，让它们也能向右滚动
   if (isLastTwo) {
-    // 检查是否需要增加滚动空间
     const currentMaxScroll = teamMembersContainer.scrollWidth - containerWidth
-    // 最后一个成员需要更多空间
     const requiredScrollSpace = isLastOne ? 800 : 400
-    
-    // 对于最后一个成员，总是添加临时空间；对于倒数第二个，检查是否需要
     const shouldAddSpace = isLastOne || teamMembersContainer.scrollLeft >= currentMaxScroll - 100
-    
     if (shouldAddSpace) {
       const spacer = document.createElement('div')
       spacer.className = 'temp-spacer'
@@ -383,55 +307,33 @@ const expandMemberDetail = (member: any) => {
       teamMembersContainer.appendChild(spacer)
     }
   }
-  
-  // 统一的滚动逻辑：所有成员都使用相同的居中计算
-  const extraOffset = containerWidth * 0.15 // 减少额外偏移，让滚动更精确
+  const extraOffset = containerWidth * 0.15
   targetScrollLeft = cardLeftInContainer + (cardWidth / 2) - (containerWidth / 2) + extraOffset
-  
-  // GSAP时间线
   const tl = gsap.timeline()
-  
-  // 0. 禁用CSS transition避免冲突
   tl.set(selectedCard, { transition: 'none' })
-  
-  // 1. 隐藏滚动提示
   tl.set('.scroll-hint', { display: 'none' })
-  
-  // 2. 快速滚动到目标位置
   const finalScrollLeft = Math.max(0, Math.min(targetScrollLeft, teamMembersContainer.scrollWidth - containerWidth))
-  
   tl.to(teamMembersContainer, {
     scrollLeft: finalScrollLeft,
     duration: 0.5,
     ease: "power2.out"
   }, 0)
-  
-  // 3. 计算位置并开始展开动画  
   const centerX = window.innerWidth / 2
   const centerY = window.innerHeight / 2
   const cardCenterX = cardRect.left + cardRect.width / 2
   const cardCenterY = cardRect.top + cardRect.height / 2
-  
   let finalOffsetX = centerX - cardCenterX
   let finalOffsetY = centerY - cardCenterY
-  
-  // 第一个成员特殊处理
   if (memberIndex === 0) {
-    finalOffsetX = 400 // 固定向右偏移400px
+    finalOffsetX = 400
   }
-  
-  // 快速隐藏滚动并开始展开
   tl.set('.team-members', { overflowX: 'hidden' }, 0.3)
-  
-  // 隐藏其他卡片 - 与滚动同时开始
   tl.to(otherCards, {
     opacity: 0,
     scale: 0.8,
     duration: 0.5,
     ease: "power2.out"
   }, 0.2)
-  
-  // 展开选中卡片 - 与滚动高度重叠
   tl.to(selectedCard, {
     width: window.innerWidth * 0.75,
     height: window.innerHeight * 0.8,
@@ -440,17 +342,12 @@ const expandMemberDetail = (member: any) => {
     duration: 0.8,
     ease: "power2.out"
   }, 0.3)
-  
-  // 透明化背景
   tl.to(selectedCard, { 
     '--bg-opacity': 0.3,
     duration: 0.4,
     ease: "power2.out"
   }, 0.7)
-  
-  // 显示详情面板 - 等待Vue渲染完成
   tl.call(() => {
-    // 使用 nextTick 确保 DOM 已更新
     nextTick(() => {
       const detailPanel = document.querySelector('.member-detail')
       if (detailPanel) {
@@ -458,7 +355,6 @@ const expandMemberDetail = (member: any) => {
           { opacity: 0, x: 50 },
           { opacity: 1, x: 0, duration: 0.5, ease: "power2.out", 
             onComplete: () => {
-              // 动画完成后恢复CSS transition
               gsap.set(selectedCard, { transition: 'all 0.4s ease' })
             }
           }
@@ -469,32 +365,22 @@ const expandMemberDetail = (member: any) => {
     })
   }, [], 1.0)
 }
-
-// 关闭详情
 const closeDetail = () => {
   const isMobile = window.innerWidth <= 768
-  
   if (isMobile) {
-    // 移动端简单关闭动画
     closeDetailMobile()
   } else {
-    // 桌面端复杂关闭动画
     closeDetailDesktop()
   }
 }
-
-// 移动端关闭详情（简化版）
 const closeDetailMobile = () => {
   const detailPanel = document.querySelector('.member-detail') as HTMLElement
-  
   if (detailPanel) {
-    // 移除触摸事件监听器
     removeMobileTouchListeners(detailPanel)
-    
     gsap.to(detailPanel, {
       opacity: 0,
       scale: 0.9,
-      y: 50, // 向下滑出的效果
+      y: 50,
       duration: 0.25,
       ease: "power2.in",
       onComplete: () => {
@@ -507,38 +393,26 @@ const closeDetailMobile = () => {
     isExpanded.value = false
   }
 }
-
-// 桌面端关闭详情（原复杂动画）
 const closeDetailDesktop = () => {
   const selectedCardElement = document.querySelector(`.member-${selectedMember.value?.id}`)
   const otherCards = document.querySelectorAll('.member-card:not(.member-' + selectedMember.value?.id + ')')
-  
   const tl = gsap.timeline({
     onComplete: () => {
       selectedMember.value = null
       isExpanded.value = false
-      // 恢复CSS transition
       if (selectedCardElement) {
         gsap.set(selectedCardElement, { transition: 'all 0.4s ease' })
       }
-      // 清理临时滚动空间
       const tempSpacer = document.querySelector('.temp-spacer')
       if (tempSpacer) {
         tempSpacer.remove()
       }
     }
   })
-  
-  // 禁用CSS transition避免冲突
   if (selectedCardElement) {
     tl.set(selectedCardElement, { transition: 'none' })
   }
-  
-  // 快速关闭动画
-  // 1. 隐藏详情面板
   tl.to('.member-detail', { opacity: 0, x: 50, duration: 0.3, ease: "power2.in" }, 0)
-  
-  // 2. 恢复背景透明度
   if (selectedCardElement) {
     tl.to(selectedCardElement, { 
       '--bg-opacity': 1,
@@ -546,8 +420,6 @@ const closeDetailDesktop = () => {
       ease: "power2.out"
     }, 0)
   }
-  
-  // 3. 恢复卡片大小和位置
   tl.to(selectedCardElement, {
     width: 500,
     height: 600,
@@ -556,24 +428,16 @@ const closeDetailDesktop = () => {
     duration: 0.6,
     ease: "power2.out"
   }, 0.1)
-  
-  // 4. 显示其他卡片
   tl.to(otherCards, {
     opacity: 1,
     scale: 1,
     duration: 0.5,
     ease: "power2.out"
   }, 0.2)
-  
-  // 5. 恢复滚动功能和滚动提示
   tl.set('.team-members', { overflowX: 'auto' }, 0.7)
   tl.set('.scroll-hint', { display: 'block', opacity: 1 }, 0.7)
 }
-
-
-
 onMounted(() => {
-  // 当组件挂载后延迟触发动画
   setTimeout(() => {
     if (teamMembersRef.value) {
       const cards = teamMembersRef.value.querySelectorAll('.member-card')
@@ -586,7 +450,6 @@ onMounted(() => {
   }, 1000)
 })
 </script>
-
 <style scoped>
 @font-face {
   font-family: 'Inter Display';
@@ -595,7 +458,6 @@ onMounted(() => {
   font-style: normal;
   font-display: swap;
 }
-
 .us-container {
   position: absolute;
   top: 0;
@@ -607,7 +469,6 @@ onMounted(() => {
   padding: 0;
   z-index: 10;
 }
-
 .us-title-container {
   position: absolute;
   top: 60px;
@@ -618,7 +479,6 @@ onMounted(() => {
   gap: 15px;
   z-index: 20;
 }
-
 .us-title {
   font-family: 'Inter Display', 'Georgia', serif;
   font-size: 4rem;
@@ -635,7 +495,6 @@ onMounted(() => {
   transform: translateY(20px);
   animation: usFadeIn 1s ease-out 1s forwards;
 }
-
 .us-underline {
   width: 80px;
   height: 4px;
@@ -654,7 +513,6 @@ onMounted(() => {
     0 0 10px rgba(44, 226, 126, 0.5),
     0 0 20px rgba(44, 226, 126, 0.3);
 }
-
 .team-members {
   display: flex;
   align-items: center;
@@ -668,19 +526,13 @@ onMounted(() => {
   overflow-y: hidden;
   scroll-behavior: smooth;
   box-sizing: border-box;
-  
-  /* 隐藏滚动条 */
   scrollbar-width: none;
   -ms-overflow-style: none;
-  
-  /* 移动端触摸滚动优化 */
   -webkit-overflow-scrolling: touch;
 }
-
 .team-members::-webkit-scrollbar {
   display: none;
 }
-
 .member-card {
   flex-shrink: 0;
   width: 500px;
@@ -702,13 +554,10 @@ onMounted(() => {
   opacity: 0;
   transform: translateX(-80px);
   cursor: pointer;
-  
-  /* 质感效果 */
   box-shadow: 
     0 12px 48px rgba(0, 0, 0, 0.4),
     inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
-
 .member-card::after {
   content: '';
   position: absolute;
@@ -721,19 +570,14 @@ onMounted(() => {
   z-index: 1;
   transition: background 0.4s ease;
 }
-
-/* 普通状态下的垂直布局 */
 .member-card:not(.expanded) {
   flex-direction: column;
   justify-content: flex-end;
 }
-
-/* 展开状态下的水平布局 */
 .member-card.expanded {
   flex-direction: row;
   justify-content: space-between;
 }
-
 .member-card::before {
   content: '';
   position: absolute;
@@ -751,9 +595,6 @@ onMounted(() => {
   z-index: 1;
   pointer-events: none;
 }
-
-
-
 .member-card:hover {
   transform: translateY(-12px) scale(1.02);
   box-shadow: 
@@ -762,15 +603,11 @@ onMounted(() => {
     inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   border-color: rgba(44, 226, 126, 0.3);
 }
-
-/* 移动端点击效果 */
 @media (max-width: 768px) {
   .member-card:active {
     transform: scale(0.98);
     transition: transform 0.1s ease;
   }
-  
-  /* 禁用移动端的hover效果 */
   .member-card:hover {
     transform: none;
     box-shadow: 
@@ -778,20 +615,17 @@ onMounted(() => {
       inset 0 0 0 1px rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.1);
   }
-  
   .member-card:hover .member-info {
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     background: rgba(0, 0, 0, 0.5);
   }
 }
-
 .member-card:hover .member-info {
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   background: rgba(0, 0, 0, 0.6);
 }
-
 .member-info {
   padding: 20px 0;
   background: rgba(0, 0, 0, 0.5);
@@ -806,7 +640,6 @@ onMounted(() => {
   position: relative;
   z-index: 10;
 }
-
 .member-name {
   font-family: 'Inter Display', 'Georgia', serif;
   font-size: 1.6rem;
@@ -818,7 +651,6 @@ onMounted(() => {
   letter-spacing: 0.02em;
   line-height: 1.2;
 }
-
 .member-role {
   font-family: 'Inter Display', 'Georgia', serif;
   font-size: 1rem;
@@ -829,8 +661,6 @@ onMounted(() => {
   letter-spacing: 0.01em;
   line-height: 1.3;
 }
-
-/* 详情面板样式 */
 .member-detail {
   position: absolute;
   top: 0;
@@ -846,31 +676,23 @@ onMounted(() => {
   opacity: 0;
   z-index: 20;
 }
-
 .detail-content {
   height: 100%;
   overflow-y: auto;
   padding: 40px;
-  
-  /* 隐藏滚动条 */
   scrollbar-width: none;
   -ms-overflow-style: none;
-  
-  /* 移动端触摸滚动优化 */
   -webkit-overflow-scrolling: touch;
 }
-
 .detail-content::-webkit-scrollbar {
   display: none;
 }
-
 .detail-header {
   position: relative;
   margin-bottom: 40px;
   padding-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 .detail-header h2 {
   font-family: 'Inter Display', 'Georgia', serif;
   font-size: 2.5rem;
@@ -879,7 +701,6 @@ onMounted(() => {
   margin: 0 0 10px 0;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
-
 .detail-role {
   font-family: 'Inter Display', 'Georgia', serif;
   font-size: 1.2rem;
@@ -887,7 +708,6 @@ onMounted(() => {
   margin: 0;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
-
 .close-btn {
   position: absolute;
   top: 0;
@@ -905,18 +725,15 @@ onMounted(() => {
   justify-content: center;
   transition: all 0.3s ease;
 }
-
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(44, 226, 126, 0.5);
 }
-
 .detail-body {
   display: flex;
   flex-direction: column;
   gap: 30px;
 }
-
 .detail-section h3 {
   font-family: 'Inter Display', 'Georgia', serif;
   font-size: 1.3rem;
@@ -925,7 +742,6 @@ onMounted(() => {
   margin: 0 0 15px 0;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
-
 .detail-section p {
   font-family: 'Inter Display', 'Georgia', serif;
   font-size: 1rem;
@@ -933,13 +749,11 @@ onMounted(() => {
   line-height: 1.6;
   margin: 0;
 }
-
 .skills-list {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
-
 .skill-tag {
   background: rgba(44, 226, 126, 0.2);
   border: 1px solid rgba(44, 226, 126, 0.4);
@@ -950,13 +764,11 @@ onMounted(() => {
   color: rgba(44, 226, 126, 0.9);
   font-weight: 500;
 }
-
 .achievements-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
-
 .achievements-list li {
   font-family: 'Inter Display', 'Georgia', serif;
   font-size: 1rem;
@@ -966,7 +778,6 @@ onMounted(() => {
   padding-left: 20px;
   position: relative;
 }
-
 .achievements-list li::before {
   content: '→';
   position: absolute;
@@ -974,7 +785,6 @@ onMounted(() => {
   color: rgba(44, 226, 126, 0.7);
   font-weight: bold;
 }
-
 .github-link {
   color: rgba(44, 226, 126, 0.9);
   text-decoration: none;
@@ -983,23 +793,15 @@ onMounted(() => {
   font-weight: 500;
   transition: color 0.3s ease;
 }
-
 .github-link:hover {
   color: rgba(44, 226, 126, 1);
 }
-
-/* 默认隐藏滑动指示器（桌面端） */
 .swipe-indicator {
   display: none;
 }
-
-
-
-/* 动画触发 */
 .member-card.animate-in {
   animation: slideInFromLeft 0.8s ease-out forwards;
 }
-
 @keyframes scrollHintFadeIn {
   from {
     opacity: 0;
@@ -1010,7 +812,6 @@ onMounted(() => {
     transform: translateY(0);
   }
 }
-
 @keyframes scrollHintPulse {
   0%, 100% {
     transform: scale(1);
@@ -1021,9 +822,6 @@ onMounted(() => {
     box-shadow: 0 0 0 10px rgba(44, 226, 126, 0);
   }
 }
-
-
-
 @keyframes usFadeIn {
   from {
     opacity: 0;
@@ -1034,7 +832,6 @@ onMounted(() => {
     transform: translateY(0);
   }
 }
-
 @keyframes slideInFromLeft {
   from {
     opacity: 0;
@@ -1045,7 +842,6 @@ onMounted(() => {
     transform: translateX(0);
   }
 }
-
 @keyframes underlineExpand {
   from {
     opacity: 0;
@@ -1056,28 +852,22 @@ onMounted(() => {
     transform: scaleX(1);
   }
 }
-
-/* 响应式调整 */
 @media (max-width: 768px) {
   .us-container {
     height: 100vh;
     overflow: hidden;
   }
-  
   .us-title-container {
     top: 30px;
     left: 30px;
   }
-  
   .us-title {
     font-size: 2.8rem;
   }
-  
   .us-underline {
     width: 60px;
     height: 3px;
   }
-  
   .team-members {
     flex-direction: row;
     height: 100vh;
@@ -1088,27 +878,21 @@ onMounted(() => {
     overflow-x: auto;
     overflow-y: hidden;
   }
-  
   .member-card {
     width: 280px;
     height: 380px;
     flex-shrink: 0;
     margin-bottom: 0;
   }
-  
   .member-info {
     padding: 20px 16px;
   }
-  
   .member-name {
     font-size: 1.3rem;
   }
-  
   .member-role {
     font-size: 0.85rem;
   }
-  
-  /* 详情面板响应式 */
   .member-detail {
     position: fixed;
     top: 0;
@@ -1123,18 +907,15 @@ onMounted(() => {
     -webkit-backdrop-filter: blur(20px);
     background: rgba(0, 0, 0, 0.95);
   }
-  
   .detail-content {
     padding: 25px 20px;
-    padding-top: 60px; /* 为关闭按钮留出空间 */
+    padding-top: 60px; 
   }
-  
   .detail-header {
     margin-bottom: 30px;
     padding-bottom: 15px;
     position: relative;
   }
-  
   .swipe-indicator {
     display: block;
     width: 40px;
@@ -1147,16 +928,13 @@ onMounted(() => {
     left: 50%;
     transform: translateX(-50%);
   }
-  
   .detail-header h2 {
     font-size: 2rem;
-    padding-right: 50px; /* 避免与关闭按钮重叠 */
+    padding-right: 50px; 
   }
-  
   .detail-role {
     font-size: 1rem;
   }
-  
   .close-btn {
     position: fixed !important;
     top: 20px;
@@ -1170,57 +948,46 @@ onMounted(() => {
     border: 2px solid rgba(255, 255, 255, 0.2);
     z-index: 101;
   }
-  
   .detail-section h3 {
     font-size: 1.1rem;
     margin-bottom: 10px;
   }
-  
   .detail-section p {
     font-size: 0.9rem;
   }
-  
   .skills-list {
     gap: 8px;
   }
-  
   .skill-tag {
     font-size: 0.8rem;
     padding: 5px 12px;
   }
-  
   .scroll-hint {
     bottom: 30px;
     right: 30px;
   }
-  
   .scroll-hint-text {
     font-size: 0.9rem;
     padding: 10px 16px;
   }
 }
-
 @media (max-width: 480px) {
   .us-container {
     height: 100vh;
     overflow: hidden;
   }
-  
   .us-title-container {
     top: 15px;
     left: 20px;
   }
-  
   .us-title {
     font-size: 1.8rem;
     letter-spacing: 0.03em;
   }
-  
   .us-underline {
     width: 40px;
     height: 2px;
   }
-  
   .team-members {
     display: flex;
     flex-direction: column;
@@ -1232,27 +999,21 @@ onMounted(() => {
     overflow-x: hidden;
     align-content: start;
   }
-  
   .member-card {
     width: 100%;
     height: 120px;
     flex-shrink: 0;
   }
-  
   .member-info {
     padding: 12px 15px;
   }
-  
   .member-name {
     font-size: 1.1rem;
     line-height: 1.2;
   }
-  
   .member-role {
     font-size: 0.8rem;
   }
-  
-  /* 详情面板响应式 */
   .member-detail {
     position: fixed;
     top: 0;
@@ -1262,17 +1023,14 @@ onMounted(() => {
     border-radius: 0;
     z-index: 100;
   }
-  
   .detail-content {
     padding: 15px;
-    padding-top: 70px; /* 为关闭按钮留出更多空间 */
+    padding-top: 70px; 
   }
-  
   .detail-header {
     margin-bottom: 20px;
     padding-bottom: 10px;
   }
-  
   .swipe-indicator {
     display: block;
     width: 35px;
@@ -1285,17 +1043,14 @@ onMounted(() => {
     left: 50%;
     transform: translateX(-50%);
   }
-  
   .detail-header h2 {
     font-size: 1.6rem;
     margin-bottom: 5px;
-    padding-right: 50px; /* 避免与关闭按钮重叠 */
+    padding-right: 50px; 
   }
-  
   .detail-role {
     font-size: 0.9rem;
   }
-  
   .close-btn {
     position: fixed !important;
     top: 15px;
@@ -1309,65 +1064,51 @@ onMounted(() => {
     border: 2px solid rgba(255, 255, 255, 0.3);
     z-index: 101;
   }
-  
   .detail-section {
     margin-bottom: 20px;
   }
-  
   .detail-section h3 {
     font-size: 1rem;
     margin-bottom: 8px;
   }
-  
   .detail-section p, .achievements-list li {
     font-size: 0.85rem;
     line-height: 1.5;
   }
-  
   .achievements-list li {
     margin-bottom: 6px;
     padding-left: 15px;
   }
-  
   .skills-list {
     gap: 6px;
   }
-  
   .skill-tag {
     font-size: 0.75rem;
     padding: 4px 8px;
   }
-  
   .github-link {
     font-size: 0.85rem;
   }
-  
   .scroll-hint {
     display: none;
   }
 }
-
-/* 超小屏幕优化 */
 @media (max-width: 360px) {
   .us-container {
     height: 100vh;
     overflow: hidden;
   }
-  
   .us-title-container {
     top: 10px;
     left: 15px;
   }
-  
   .us-title {
     font-size: 1.6rem;
   }
-  
   .us-underline {
     width: 35px;
     height: 2px;
   }
-  
   .team-members {
     display: flex;
     flex-direction: column;
@@ -1379,26 +1120,21 @@ onMounted(() => {
     overflow-x: hidden;
     align-content: start;
   }
-  
   .member-card {
     width: 100%;
     height: 100px;
     flex-shrink: 0;
   }
-  
   .member-info {
     padding: 10px 12px;
   }
-  
   .member-name {
     font-size: 1rem;
     line-height: 1.1;
   }
-  
   .member-role {
     font-size: 0.75rem;
   }
-  
   .member-detail {
     position: fixed;
     top: 0;
@@ -1408,17 +1144,14 @@ onMounted(() => {
     border-radius: 0;
     z-index: 100;
   }
-  
   .detail-content {
     padding: 12px;
-    padding-top: 60px; /* 为关闭按钮留出空间 */
+    padding-top: 60px; 
   }
-  
   .detail-header h2 {
     font-size: 1.4rem;
-    padding-right: 45px; /* 避免与关闭按钮重叠 */
+    padding-right: 45px; 
   }
-  
   .swipe-indicator {
     display: block;
     width: 30px;
@@ -1431,11 +1164,9 @@ onMounted(() => {
     left: 50%;
     transform: translateX(-50%);
   }
-  
   .detail-role {
     font-size: 0.8rem;
   }
-  
   .close-btn {
     position: fixed !important;
     top: 10px;
@@ -1449,16 +1180,13 @@ onMounted(() => {
     border: 2px solid rgba(255, 255, 255, 0.3);
     z-index: 101;
   }
-  
   .detail-section h3 {
     font-size: 0.9rem;
     margin-bottom: 6px;
   }
-  
   .detail-section p, .achievements-list li {
     font-size: 0.8rem;
   }
-  
   .skill-tag {
     font-size: 0.7rem;
     padding: 3px 6px;

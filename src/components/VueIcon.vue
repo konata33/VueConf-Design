@@ -16,26 +16,19 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
 import { gsap } from 'gsap'
-
+import { onMounted, ref } from 'vue'
 const iconWrapper = ref<HTMLElement>()
 const magicGlowBackground = ref<HTMLElement>()
-
 const startAnimation = () => {
-  // Vue图标进入动画
-  const iconTimeline = gsap.timeline({ delay: 4 }) // 4秒后开始，配合加快的文字动画
-  
+  const iconTimeline = gsap.timeline({ delay: 4 })
   if (iconWrapper.value) {
-    // 先设置初始状态
     gsap.set(iconWrapper.value, {
       opacity: 0,
       scale: 0.3,
       rotation: -10
     })
-    
     iconTimeline.to(iconWrapper.value, {
       opacity: 1,
       scale: 1,
@@ -44,12 +37,8 @@ const startAnimation = () => {
       ease: "back.out(1.7)"
     })
   }
-  
-  // 光晕效果动画
   if (magicGlowBackground.value) {
     const layers = magicGlowBackground.value.querySelectorAll('.magic-glow-layer')
-    
-    // 设置每层的初始旋转角度
     const rotations = [0, 45, -30, 20]
     layers.forEach((layer, index) => {
       gsap.set(layer, {
@@ -58,11 +47,7 @@ const startAnimation = () => {
         rotation: rotations[index] || 0
       })
     })
-    
-    // 创建主光晕时间线
-    const mainGlowTimeline = gsap.timeline({ delay: 5.8 }) // 调整为5.8秒，配合新的Vue图标时机
-    
-    // 光晕展开动画
+    const mainGlowTimeline = gsap.timeline({ delay: 5.8 })
     layers.forEach((layer, index) => {
       mainGlowTimeline.to(layer, {
         opacity: 1,
@@ -71,8 +56,6 @@ const startAnimation = () => {
         ease: "power3.out"
       }, index * 0.15)
     })
-    
-    // 在展开完成后开始呼吸动画
     mainGlowTimeline.to(layers, {
       scale: 1.06,
       duration: 3,
@@ -83,18 +66,15 @@ const startAnimation = () => {
         each: 0.3,
         from: "center"
       }
-    }, "+=0.5") // 展开完成后0.5秒开始呼吸
+    }, "+=0.5")
   }
 }
-
 onMounted(() => {
-  // 备用动画触发
   setTimeout(() => {
     startAnimation()
-  }, 4500) // 调整为4.5秒，配合加快的动画节奏
+  }, 4500)
 })
 </script>
-
 <style scoped>
 .vue-icon-container {
   display: flex;
@@ -102,7 +82,6 @@ onMounted(() => {
   justify-content: center;
   position: relative;
 }
-
 .icon-wrapper {
   position: relative;
   opacity: 0;
@@ -111,7 +90,6 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
 }
-
 .vue-logo {
   width: 400px;
   height: 400px;
@@ -122,9 +100,6 @@ onMounted(() => {
   z-index: 2;
   position: relative;
 }
-
-
-
 .magic-glow-background {
   position: absolute;
   top: 50%;
@@ -135,7 +110,6 @@ onMounted(() => {
   z-index: 0;
   pointer-events: none;
 }
-
 .magic-glow-layer {
   position: absolute;
   top: 50%;
@@ -144,7 +118,6 @@ onMounted(() => {
   border-radius: 50%;
   opacity: 0;
 }
-
 .layer-1 {
   width: 600px;
   height: 450px;
@@ -159,7 +132,6 @@ onMounted(() => {
   transform: translate(-50%, -50%) scale(0.1);
   opacity: 0;
 }
-
 .layer-2 {
   width: 450px;
   height: 600px;
@@ -173,7 +145,6 @@ onMounted(() => {
   transform: translate(-50%, -50%) scale(0.1) rotate(45deg);
   opacity: 0;
 }
-
 .layer-3 {
   width: 520px;
   height: 380px;
@@ -187,7 +158,6 @@ onMounted(() => {
   transform: translate(-50%, -50%) scale(0.1) rotate(-30deg);
   opacity: 0;
 }
-
 .layer-4 {
   width: 680px;
   height: 340px;
@@ -201,48 +171,37 @@ onMounted(() => {
   transform: translate(-50%, -50%) scale(0.1) rotate(20deg);
   opacity: 0;
 }
-
-
-
-/* 响应式调整 */
 @media (max-width: 768px) {
   .vue-logo {
     width: 300px;
     height: 300px;
   }
-  
   .glow-effect {
     width: 360px;
     height: 360px;
   }
-  
   .magic-glow-background {
     width: 600px;
     height: 600px;
   }
-  
   .layer-1 { width: 450px; height: 340px; }
   .layer-2 { width: 340px; height: 450px; }
   .layer-3 { width: 390px; height: 285px; }
   .layer-4 { width: 510px; height: 255px; }
 }
-
 @media (max-width: 480px) {
   .vue-logo {
     width: 250px;
     height: 250px;
   }
-  
   .glow-effect {
     width: 300px;
     height: 300px;
   }
-  
   .magic-glow-background {
     width: 480px;
     height: 480px;
   }
-  
   .layer-1 { width: 360px; height: 270px; }
   .layer-2 { width: 270px; height: 360px; }
   .layer-3 { width: 315px; height: 230px; }
