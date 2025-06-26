@@ -310,7 +310,7 @@ onMounted(() => {
 
 .timeline-wrapper {
   position: absolute;
-  bottom: 200px;
+  bottom: 150px;
   left: 0;
   right: 0;
   height: 580px;

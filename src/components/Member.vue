@@ -65,12 +65,6 @@
       </div>
     </div>
     
-
-    
-    <!-- 滚动提示 -->
-    <div class="scroll-hint">
-      <div class="scroll-hint-text">Scroll →</div>
-    </div>
   </div>
 </template>
 
@@ -668,6 +662,7 @@ onMounted(() => {
   gap: 60px;
   width: 100%;
   height: 100vh;
+  margin-top:150px;
   padding: 0 100px 0 120px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -1003,30 +998,6 @@ onMounted(() => {
 /* 动画触发 */
 .member-card.animate-in {
   animation: slideInFromLeft 0.8s ease-out forwards;
-}
-
-/* 滚动提示 */
-.scroll-hint {
-  position: absolute;
-  bottom: 40px;
-  right: 40px;
-  z-index: 20;
-  opacity: 0;
-  animation: scrollHintFadeIn 1s ease-out 3s forwards;
-}
-
-.scroll-hint-text {
-  font-family: 'Inter Display', 'Georgia', serif;
-  font-size: 1rem;
-  color: rgba(44, 226, 126, 0.8);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 12px 20px;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(44, 226, 126, 0.3);
-  border-radius: 25px;
-  animation: scrollHintPulse 2s infinite;
 }
 
 @keyframes scrollHintFadeIn {
